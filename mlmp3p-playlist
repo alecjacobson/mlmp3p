@@ -1,0 +1,72 @@
+#!/opt/local/bin/ruby -w
+#!/usr/local/bin/ruby -w
+# mlmp3p playlist generator
+# Version: 0.04
+# Author: Alec Jacobson (alecjacobson@nyu.edu)
+#
+
+require 'rubygems'
+require 'mlmp3p'
+
+def begin_playlist_generator
+  player = Mlmp3p::Player.new
+  
+  if(ARGV[0] == "-h" || ARGV[0] == "--help" || ARGV[0] == "-help")
+    puts "Make a new xml playlist file from directory:"
+    puts "mlmp3p-playlist path/to/music/ output-playlist.xml"
+    puts 
+    puts "Make a new xml playlist file from txt file of tracks on lines:"
+    puts "mlmp3p-playlist path/to/music.txt output-playlist.xml"
+    puts 
+  end
+
+  # just play a playlist with no contoller
+  if ARGV.length==1
+    playlist_path = ARGV[0]
+    import_thread = Thread.new {
+      begin
+        if playlist_path =~ /\.xml$/
+          player.load_xml_playlist playlist_path
+        elsif File.directory?(playlist_path)
+          player.import_directory(playlist_path, recursive=true)
+        else 
+          player.import_playlist File.open(playlist_path).read.split("\n")
+        end
+      rescue => ex
+        puts "#{ex.class}: #{ex.message}"
+        puts ex.backtrace
+      end
+    }
+    # lower priority so that importing doesn't make player skip
+    # this slows importing to almost a dead halt...
+    # but without it user can't enter long commands
+    import_thread.priority=-1
+    player.start
+  # just make an xml playlist with the given dir or dat playlist
+  elsif ARGV.length==2
+    input_path = ARGV[0]
+    output_path = ARGV[1]
+    begin
+      # if output xml already exists then load it first
+      if output_path =~ /\.xml$/ and File.exists?(output_path)
+        player.load_xml_playlist output_path
+      end
+      if input_path =~ /\.xml$/
+        # should only load non-dupes !!!
+        player.load_xml_playlist input_path
+      elsif File.directory?(input_path)
+        player.import_directory(input_path, recursive=true,only_new=true)
+      else 
+        # should only load non-dupes !!!
+        player.import_playlist File.open(input_path).read.split("\n")
+      end
+      player.write_tracks_array_to_xml_file(
+        player.original_tracks_array, output_path)
+    rescue => ex
+      puts "#{ex.class}: #{ex.message}"
+      puts ex.backtrace
+    end
+  end
+end
+
+begin_playlist_generator

@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+# mlmp3p
+# Version: 0.05
+# Author: Alec Jacobson (alecjacobson@gmail.com)
+#
+
+require 'mlmp3p'
+
+def begin_controller
+  controller = Mlmp3p::Controller.new
+  # controller.authenticate
+
+  import_thread = Thread.new {
+    begin
+      input_filename = ARGF.filename
+      if not File.exist?(input_filename)
+        puts "#{input_filename} does not exist..."
+        exit
+      end
+      if input_filename =~ /\.xml$/
+        controller.player.load_xml_playlist(input_filename,overwrite=true)
+      elsif File.directory?(input_filename)
+        controller.player.import_directory(input_filename, recursive=true)
+      else 
+        controller.player.import_playlist ARGF.read.split("\n")
+      end
+      controller.puts ""
+      controller.puts "All tracks from #{input_filename} imported."
+      if(controller.player.shuffled and controller.player.using_originals)
+        controller.player.shuffle_tracks_array
+      end
+        
+    rescue => ex
+      puts "#{ex.class}: #{ex.message}"
+      puts ex.backtrace
+    end
+
+  }
+
+
+  player_thread = Thread.new{
+    controller.player.start
+  }
+  player_thread.priority = 1
+
+  # infinite loop holding controller
+  while(true)
+    begin
+      controller.control
+    rescue => ex
+      puts "#{ex.class}: #{ex.message}"
+      puts ex.backtrace
+    end
+    puts "Restarting controller..."
+  end
+
+  # lower priority so that importing doesn't make player skip
+  # this slows importing to almost a dead halt...
+  # but without it user can't enter long commands
+  import_thread.priority=-20
+end
+
+puts "mlmp3p version 0.04"
+begin_controller

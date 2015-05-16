@@ -1,0 +1,118 @@
+################################################################
+#                                                              #
+#    TODOs:                                                    #
+#      - not done                                              #
+#      + done                                                  #
+#      x abandoned                                             #
+#                                                              #
+#      prepend new todos to top of list                        #
+#                                                              #
+################################################################
+
+= Sunday, November 22, 2009 =
+  - don't skip bad mp3info
+    - mplayer/mpg123 will find it later
+    - prompt to resave xml if found new mp3tag info
+    - could mark bad files...
+    - better err output
+  - progress bars for duration
+    - optional
+    - variable read from player displayed by controller
+  - volume % display
+    - variable read from player displayed by controller
+  - -h and -commands options on mlmp3p and mlmp3p-playlist executables
+  + install script
+  - gem installs?
+  - separate executables from classes
+    - could be bash... although what about windows...
+  - what's happening on windows?
+  - rdoc
+  - PAUSED does not ALWAYS mean paused, got flipped once some how
+  - suppress (delay) all prints while Readline
+  + print nice XML data (like track, artist, album etc)
+  - be able to read in iTunes xml playlist
+    - or even save as same format (readable by iTunes)
+      - or at least have that output as an option
+  x burn playlist to cd
+  - : or <ESC> should not enter a line, just clear the line
+  - move all puts outside of info, return strings or arrays of strings
+    - probably a hash
+      - {:message=>"asdf", :error_message=>"asdfasdf"}
+  - playlist stats as hash
+  - get rid of .intern's
+  - thread around write_xml making it too slow?
+  - lyrics from the internet?
+  - whether song is a cover from the internet?
+  - good method for stringing together regexes...
+    - ands and ors,
+      - r/King /artist and /of France/artist
+      - r/King of France/artist or /Deformo/artist
+  - mix-in current playlist with original (order them at the top?)
+  - previous playlists should be stored in a stack
+  - import command for dat files add to playlist not replace
+    - list non mp3 files
+  - import command for xml files add to playlist not replace
+  - if xml file given on CMDLINE then add all and MANAGE using that file
+    - cleanup playlist command
+      - remove dups based on path
+      - remove tracks that no longer exist
+      - list tracks whose path no longer exists
+  - union and intersect operations on playlists
+  - if not using original playlist and songs run out (no loop) then prompt to
+  - dynamic rating based on skippage
+    - duration before skip heavily weighted to everything but end
+    - how many skips recently to counteract surfing
+    - write current playlist with weights
+    - recursively add non-existing mp3s to existing weighted playlist
+  - list available playlists, recursive option
+  - convert or convert! non mp3s to mp3
+  - quit should reexport to xml? or special save and quit or just w then q
+    - could prompt for file if not using one
+
+= Thursday, October 8, 2009 =
+  - rdoc
+  + should be way to make mplayer stop current song before starting next
+  - PAUSED does not ALWAYS mean paused, got flipped once some how
+  - suppress (delay) all prints while Readline
+  - print nice XML data (like track, artist, album etc)
+  - be able to read in iTunes xml playlist
+  - burn playlist to cd
+  - : or <ESC> should not enter a line, just clear the line
+  - move all puts outside of info, return strings or arrays of strings
+    - probably a hash
+      - {:message=>"asdf", :error_message=>"asdfasdf"}
+  - playlist stats as hash
+  - get rid of .intern's
+  + volume controls
+  - thread around write_xml making it too slow?
+  - lyrics from the internet?
+  - whether song is a cover from the internet?
+  + pauses after p/song/title finishes playing
+    x need an example to recreate this...
+    + pauses after next track...
+  - good method for stringing together regexes...
+    - ands and ors,
+      - r/King /artist and /of France/artist
+      - r/King of France/artist or /Deformo/artist
+  - mix-in current playlist with original (order them at the top?)
+  - previous playlists should be stored in a stack
+  - import command for dat files add to playlist not replace
+    - list non mp3 files
+  - import command for xml files add to playlist not replace
+  - if xml file given on CMDLINE then add all and MANAGE using that file
+    - cleanup playlist command
+      - remove dups based on path
+      - remove tracks that no longer exist
+      - list tracks whose path no longer exists
+  - union and intersect operations on playlists
+  - if not using original playlist and songs run out (no loop) then prompt to
+  - dynamic rating based on skippage
+    - duration before skip heavily weighted to everything but end
+    - how many skips recently to counteract surfing
+    - write current playlist with weights
+    - recursively add non-existing mp3s to existing weighted playlist
+  - list available playlists, recursive option
+  - convert or convert! non mp3s to mp3
+  - quit should reexport to xml? or special save and quit or just w then q
+    - could prompt for file if not using one
+
