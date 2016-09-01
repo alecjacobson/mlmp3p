@@ -8,5 +8,5 @@ Gem::Specification.new do |s|
   s.summary = %q{My little mp3 player presents a concise but extremely functional command line mp3 player! Wrapping either mplayer or mpg123 (whichever is present), Mlmp3p provides high-powered playlist manipulation. It's the vi or emacs of command line mp3 players.}
   s.homepage = %q{http://alecjacobson.com/mlmp3p/}
   s.description = %q{My little mp3 player presents a concise but extremely functional command line mp3 player.}
-  s.files = [ "README.txt", "lib/controller.rb","lib/player.rb", "lib/mlmp3p.rb"]
+  s.files = [ "README.md", "lib/controller.rb","lib/player.rb", "lib/mlmp3p.rb"]
 end
