@@ -61,6 +61,8 @@ require 'builder'
 require 'libxml'
 # for copying files
 require 'ftools'
+# for timestamps
+require 'time'
   
 module Mlmp3p
   # class for each track, basic information and weighting for smart random
@@ -629,7 +631,9 @@ module Mlmp3p
         # check if should pause if muted
         if @mute_thread.nil? or not @mute_thread.alive?
           @mute_thread = Thread.new do 
-            is_muted = `osascript -e "output muted of (get volume settings)"`.strip 
+            effective_volume = `volume`.to_f;
+            is_muted = effective_volume==0;
+            #is_muted = `osascript -e "output muted of (get volume settings)"`.strip 
             if is_muted == "true"
               if @playing
                 toggle_pause
@@ -972,8 +976,8 @@ module Mlmp3p
           track_path = track_path.gsub(/^#{prefix}/,"")
         end
         puts "Path:    #{track_path}"
-        puts "Played:  #{track.played}"
-        puts "Skipped: #{track.skipped}"
+        #puts "Played:  #{track.played}"
+        #puts "Skipped: #{track.skipped}"
       end
     end
 
@@ -1603,18 +1607,27 @@ module Mlmp3p
       puts "on_track_finished"
       # finished playing track, increase play count
       @current_track.played = @current_track.played + 1
-      # write to xml file
-      if not @xml_file_name.nil?
-        puts "about to start new thread"
-        xml_thread = Thread.new{
-          sleep(4)
-          write_tracks_array_to_xml_file(
-            @original_tracks_array.clone,@xml_file_name)
-        }
-        xml_thread.priority = -10
-      else
-        puts "xml_file_name was nil"
-      end
+      @player.append_track_stats(true)
+      # This isn't keeping track of play counts so it's just wasting
+      # CPU/battery after every song.
+      ## write to xml file
+      #if not @xml_file_name.nil?
+      #  puts "about to start new thread"
+      #  xml_thread = Thread.new{
+      #    sleep(4)
+      #    write_tracks_array_to_xml_file(
+      #      @original_tracks_array.clone,@xml_file_name)
+      #  }
+      #  xml_thread.priority = -10
+      #else
+      #  puts "xml_file_name was nil"
+      #end
+    end
+
+    def append_track_stats(played)
+      stat_filename = @xml_file_name.sub(/xml$/,"csv")
+      stat = "#{played ? 1 : -1},\"#{@current_track.path}\",#{Time.now.utc.iso8601}\n"
+      open(stat_filename, 'a') { |f| f<<stat}
     end
     
   end

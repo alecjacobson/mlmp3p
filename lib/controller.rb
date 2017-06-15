@@ -128,6 +128,7 @@ module Mlmp3p
         when "f"
           if !@player.current_track.nil?
             @player.current_track.skipped = @player.current_track.skipped + 1
+            @player.append_track_stats(false)
           end
           @player.advance_and_play_track
         when "H"
