@@ -126,7 +126,7 @@ module Mlmp3p
     # for a few informational debug messages
     DEBUG = false#true
     #DEBUG = true
-    VERBOSE_DEBUG = true
+    VERBOSE_DEBUG = false
     # http://www.mplayerhq.hu/design7/dload.html
     # For Mac OS X mplayer can be found at:
     # /Applications/MPlayer\ OSX.app/Contents/Resources/External_Binaries/mplayer.app/Contents/MacOS/mplayer 
