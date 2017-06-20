@@ -126,7 +126,7 @@ module Mlmp3p
     # for a few informational debug messages
     DEBUG = false#true
     #DEBUG = true
-    VERBOSE_DEBUG = false#true
+    VERBOSE_DEBUG = true
     # http://www.mplayerhq.hu/design7/dload.html
     # For Mac OS X mplayer can be found at:
     # /Applications/MPlayer\ OSX.app/Contents/Resources/External_Binaries/mplayer.app/Contents/MacOS/mplayer 
@@ -1604,10 +1604,10 @@ module Mlmp3p
     end
 
     def on_track_finished
-      puts "on_track_finished"
+      puts "on_track_finished" if VERBOSE_DEBUG
       # finished playing track, increase play count
       @current_track.played = @current_track.played + 1
-      @player.append_track_stats(true)
+      append_track_stats(true)
       # This isn't keeping track of play counts so it's just wasting
       # CPU/battery after every song.
       ## write to xml file
@@ -1625,6 +1625,7 @@ module Mlmp3p
     end
 
     def append_track_stats(played)
+      puts "append_track_stats" if VERBOSE_DEBUG
       stat_filename = @xml_file_name.sub(/xml$/,"csv")
       stat = "#{played ? 1 : -1},\"#{@current_track.path}\",#{Time.now.utc.iso8601}\n"
       open(stat_filename, 'a') { |f| f<<stat}

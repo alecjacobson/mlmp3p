@@ -1,5 +1,4 @@
-#!/opt/local/bin/ruby -w
-#!/usr/local/bin/ruby -w
+#!/usr/bin/env ruby
 # mlmp3p playlist generator
 # Version: 0.04
 # Author: Alec Jacobson (alecjacobson@nyu.edu)
