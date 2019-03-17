@@ -25,6 +25,7 @@ Play mp3s and manage playlist via the command line with this ruby wrapping for
     mp3info  (gem)
     builder  (gem)
     libxml   (gem+)
+    ftools   (gem)
     mplayer or mpg123
 
 ## Installation of prerequisites (Mac OS X)
@@ -35,21 +36,10 @@ Play mp3s and manage playlist via the command line with this ruby wrapping for
   
   ** Do NOT use the ruby that came with your mac
   
-### Using macports (http://www.macports.org/)
+### Using homebrew
 
-    sudo port install mplayer
-    sudo port install mpg123
-    sudo port install ruby
-    sudo port install rb-rubygems
-    sudo gem install ruby-mp3info
-    sudo gem install builder
-    sudo port install libxml2 (or sudo apt-get install libxml2-dev)
-    sudo gem install libxml-ruby
-
-Or all at once:
-
-    sudo port install mplayer mpg123 ruby rb-rubygems libxml2
-    sudo gem install ruby-mp3info builder libxml-ruby
+    brew install ruby
+    gem install ruby-mp3info builder libxml-ruby ftools
 
 Install
 
