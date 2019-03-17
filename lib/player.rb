@@ -628,26 +628,26 @@ module Mlmp3p
           puts "About to automatically exit, cancel with :unsleep"
         end
 
-        # check if should pause if muted
-        if @mute_thread.nil? or not @mute_thread.alive?
-          @mute_thread = Thread.new do 
-            effective_volume = `volume`.to_f;
-            is_muted = effective_volume==0;
-            #is_muted = `osascript -e "output muted of (get volume settings)"`.strip 
-            if is_muted == "true"
-              if @playing
-                toggle_pause
-                @paused_on_mute = true
-              end
-            elsif @paused_on_mute and not @playing
-              # unpause if no longer muted and had previously paused becuase of
-              # mute
-              toggle_pause
-            end
-            sleep(0.5)
-          end
-          @mute_thread.priority = -10
-        end
+        ## check if should pause if muted
+        #if @mute_thread.nil? or not @mute_thread.alive?
+        #  @mute_thread = Thread.new do 
+        #    effective_volume = `volume`.to_f;
+        #    is_muted = effective_volume==0;
+        #    #is_muted = `osascript -e "output muted of (get volume settings)"`.strip 
+        #    if is_muted == "true"
+        #      if @playing
+        #        toggle_pause
+        #        @paused_on_mute = true
+        #      end
+        #    elsif @paused_on_mute and not @playing
+        #      # unpause if no longer muted and had previously paused becuase of
+        #      # mute
+        #      toggle_pause
+        #    end
+        #    sleep(0.5)
+        #  end
+        #  @mute_thread.priority = -10
+        #end
       end
     end
     
