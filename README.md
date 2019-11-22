@@ -82,3 +82,7 @@ To print usage instructions
 
      mlmp3p -commands
 
+**Useful tip:**
+Export a playlist from itunes as `plain-text.txt` then convert to simple list of file paths `playlist.txt` using:
+
+    cat plain-text.txt | tr '\r' '\n' | sed -n "s#.*:Users:\(.*\)#Users:\1#p" | tr ':' '/' >playlist.txt
