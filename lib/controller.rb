@@ -185,6 +185,7 @@ module Mlmp3p
           #  puts "Importing paused while typing command..." 
           #end 
           # flush STDOUT so that colon is sure to print BEFORE .gets is called
+          @player.progress_bar = false;
           STDOUT.flush
           #kb_input = STDIN.gets
           #exec_long_command(kb_input.gsub!(/\n$/,""))
@@ -208,6 +209,7 @@ module Mlmp3p
          #  sleep(0.1)
          #end
          exec_long_command(kb_input)
+         @player.progress_bar = true;
         when "\r"
           puts ""
           #do nothing

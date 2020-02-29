@@ -39,7 +39,7 @@ Play mp3s and manage playlist via the command line with this ruby wrapping for
 ### Using homebrew
 
     brew install ruby
-    gem install ruby-mp3info builder libxml-ruby ftools
+    gem install ftools ruby-mp3info builder libxml-ruby 
 
 Install
 

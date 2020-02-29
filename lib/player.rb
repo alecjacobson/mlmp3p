@@ -67,7 +67,7 @@ require 'time'
 module Mlmp3p
   # class for each track, basic information and weighting for smart random
   class Track
-    FIELD_KEYS = ["weight","path","tag","played","skipped"]
+    FIELD_KEYS = ["weight","path","tag","played","skipped","filename"]
     TAG_KEYS = ["artist","album","title","genre","year","comments"]
     attr_accessor :relative_path
     attr_accessor :cache_path
@@ -124,9 +124,9 @@ module Mlmp3p
   # class for playing and controlling mp3s using mplayer or mpg123
   class Player
     # for a few informational debug messages
-    DEBUG = false#true
+    DEBUG = true
     #DEBUG = true
-    VERBOSE_DEBUG = false
+    VERBOSE_DEBUG = true
     # http://www.mplayerhq.hu/design7/dload.html
     # For Mac OS X mplayer can be found at:
     # /Applications/MPlayer\ OSX.app/Contents/Resources/External_Binaries/mplayer.app/Contents/MacOS/mplayer 
@@ -163,11 +163,12 @@ module Mlmp3p
     attr_accessor :show_full_path_in_info
     attr_reader :caching
     attr_reader :force_caching
+    attr_accessor :progress_bar
     
     
     # initialize the mplayer or mpg123 player
     def initialize
-      puts "player version 0.06"
+      puts "player version 0.07"
       @available_players = check_for_players #hardcode mplayer for now...
       if(@available_players.empty?)
         puts "No available players... check paths... exiting..."
@@ -213,6 +214,7 @@ module Mlmp3p
       @sleep_amount = nil
       @sleep_warned = false
       @xml_file_name = nil
+      @progress_bar = true
     end
 
     def check_for_players
@@ -257,7 +259,7 @@ module Mlmp3p
         #  " -msglevel statusline=6 -msglevel global=6"
         #@mplayer = IO::popen("#{MPLAYER_PATH} #{options} #{redirect_output}", 
         #  'r+')
-      options = "-quiet -noconsolecontrols -nolirc -idle -slave  -msglevel statusline=6 -msglevel global=6"
+      options = "-noconsolecontrols -nolirc -idle -slave  -msglevel statusline=6 -msglevel global=6"
       @mplayer = IO.popen("#{MPLAYER_PATH} #{options} #{redirect_output}","w+")
     end
     
@@ -371,6 +373,8 @@ module Mlmp3p
             value = ""
             if field=="path"
               value = track.path
+            elsif field == "filename"
+              value = File.basename(track.path)
             elsif field == "weight"
               value = track.weight
             elsif field == "played"
@@ -557,6 +561,23 @@ module Mlmp3p
           # using mplayer and mplayer not loading
 
             mplayer_results << @mplayer.readline_nonblock
+            if @progress_bar
+              mplayer_send_command("get_percent_pos")
+              mplayer_percent = @mplayer.readline_nonblock
+              if not mplayer_percent.nil? and not mplayer_percent.empty?
+                pp = mplayer_percent.gsub(/^.*=/,"").strip
+                if not pp.nil? and not pp.empty? and pp.to_i.to_s == pp
+                  pd = pp.to_i/100.0
+                  w = 30.0
+                  rem = (pd*w)%1
+                  cw = rem<0.333333? "░" : (rem<0.6666667 ? "▒" : "▓")
+                  bw = (pd*w).floor
+                  ew = w-bw-1
+                  pb = "█"*bw + cw + "░"*ew
+                  print("\rProgress: #{pb}\r")
+                end
+              end
+            end
             if mplayer_results.length > 0 && mplayer_results[-1] == "\n"
               #print_and_flush mplayer_results
               #puts "Mplayer says '#{mplayer_results}'"
@@ -962,20 +983,20 @@ module Mlmp3p
           #puts "Genre:   "+@genre if (not @genre.nil?)
         end
         if not mp3tag.nil?
-          puts "Title:   #{mp3tag[:title]}" if (not mp3tag[:title].nil?)
-          puts "Artist:  #{mp3tag[:artist]}" if (not mp3tag[:artist].nil?)
-          puts "Ablum:   #{mp3tag[:album]}" if (not mp3tag[:album].nil?)
-          puts "Year:    #{mp3tag[:year]}" if (not mp3tag[:year].nil?)
-          puts "Comment: #{mp3tag[:comment]}" if (not mp3tag[:comment].nil?)
-          puts "Genre:   #{mp3tag[:genre]}" if (not mp3tag[:genre].nil?)
+          puts "Title:    #{mp3tag[:title]}" if (not mp3tag[:title].nil?)
+          puts "Artist:   #{mp3tag[:artist]}" if (not mp3tag[:artist].nil?)
+          puts "Ablum:    #{mp3tag[:album]}" if (not mp3tag[:album].nil?)
+          puts "Year:     #{mp3tag[:year]}" if (not mp3tag[:year].nil?)
+          puts "Comment:  #{mp3tag[:comment]}" if (not mp3tag[:comment].nil?)
+          puts "Genre:    #{mp3tag[:genre]}" if (not mp3tag[:genre].nil?)
         end
-        puts "Cache:   #{track.cache_path}" unless(track.cache_path.nil?)
+          puts "Cache:    #{track.cache_path}" unless(track.cache_path.nil?)
         track_path = track.path
         if(not @show_full_path_in_info)
           prefix = Regexp.escape(track.prefix)
           track_path = track_path.gsub(/^#{prefix}/,"")
         end
-        puts "Path:    #{track_path}"
+          puts "Path:     #{track_path}"
         #puts "Played:  #{track.played}"
         #puts "Skipped: #{track.skipped}"
       end
@@ -1303,7 +1324,7 @@ module Mlmp3p
     # this is destructive to: @tracks_array
     #   @original_tracks_array
     def import_playlist(lines)
-      # resest the original playlist
+      # reset the original playlist
       @original_tracks_array ||= []
       @tracks_array ||= []
       #bad_files = []
@@ -1312,6 +1333,7 @@ module Mlmp3p
           sleep(1)
         end
         Thread.pass
+        puts "importing #{line}..."
         import_track(line)
       end
       #if(not bad_files.empty?)
@@ -1626,9 +1648,11 @@ module Mlmp3p
 
     def append_track_stats(played)
       puts "append_track_stats" if VERBOSE_DEBUG
-      stat_filename = @xml_file_name.sub(/xml$/,"csv")
-      stat = "#{played ? 1 : -1},\"#{@current_track.path}\",#{Time.now.utc.iso8601}\n"
-      open(stat_filename, 'a') { |f| f<<stat}
+      if not @xml_file_name.nil?
+        stat_filename = @xml_file_name.sub(/xml$/,"csv")
+        stat = "#{played ? 1 : -1},\"#{@current_track.path}\",#{Time.now.utc.iso8601}\n"
+        open(stat_filename, 'a') { |f| f<<stat}
+      end
     end
     
   end

@@ -26,7 +26,7 @@ def begin_controller
       end
       controller.puts ""
       controller.puts "All tracks from #{input_filename} imported."
-      if(controller.player.shuffled and controller.player.using_originals)
+      if(controller.player.shuffled and controller.player.using_originals and  input_filename =~ /\.xml$/)
         controller.player.shuffle_tracks_array
       end
         
