@@ -124,9 +124,9 @@ module Mlmp3p
   # class for playing and controlling mp3s using mplayer or mpg123
   class Player
     # for a few informational debug messages
-    DEBUG = true
+    DEBUG = false
     #DEBUG = true
-    VERBOSE_DEBUG = true
+    VERBOSE_DEBUG = false
     # http://www.mplayerhq.hu/design7/dload.html
     # For Mac OS X mplayer can be found at:
     # /Applications/MPlayer\ OSX.app/Contents/Resources/External_Binaries/mplayer.app/Contents/MacOS/mplayer 
@@ -511,6 +511,7 @@ module Mlmp3p
       play_track
       # loop until out of songs 
       mplayer_results = ""
+      last_progress = 0
       while(true)
         
         if(@playing)
@@ -560,24 +561,11 @@ module Mlmp3p
           elsif(@player==:mplayer && !@mplayer_loading) 
           # using mplayer and mplayer not loading
 
-            mplayer_results << @mplayer.readline_nonblock
-            if @progress_bar
+            if @progress_bar && (Time.now.to_f - last_progress)>0.1
               mplayer_send_command("get_percent_pos")
-              mplayer_percent = @mplayer.readline_nonblock
-              if not mplayer_percent.nil? and not mplayer_percent.empty?
-                pp = mplayer_percent.gsub(/^.*=/,"").strip
-                if not pp.nil? and not pp.empty? and pp.to_i.to_s == pp
-                  pd = pp.to_i/100.0
-                  w = 30.0
-                  rem = (pd*w)%1
-                  cw = rem<0.333333? "░" : (rem<0.6666667 ? "▒" : "▓")
-                  bw = (pd*w).floor
-                  ew = w-bw-1
-                  pb = "█"*bw + cw + "░"*ew
-                  print("\rProgress: #{pb}\r")
-                end
-              end
+              last_progress = Time.now.to_f;
             end
+            mplayer_results << @mplayer.readline_nonblock
             if mplayer_results.length > 0 && mplayer_results[-1] == "\n"
               #print_and_flush mplayer_results
               #puts "Mplayer says '#{mplayer_results}'"
@@ -594,6 +582,24 @@ module Mlmp3p
               when %r{^Name: (.*)\s*\n$}        then  title = $1
               when %r{^Album: (.*)\s*\n$}       then  album = $1
               when %r{^Track: (.*)\s*\n$}       then  num = $1.to_i
+              when %r{^ANS_PERCENT_POSITION=(.*)\s*\n$}
+                pp = $1
+                if @progress_bar and
+                  if not pp.nil? and not pp.empty? and pp.to_i.to_s == pp
+                    pd = pp.to_i/100.0
+                    w = 33.0
+                    pb = "█"*w;
+                    last = [(pd*w).floor,w-1].min
+                    pb[0..last] = " "*(last+1)
+                    if pd<1.0
+                      rem = (pd*w)%1
+                      pb[last] = 
+                        rem<0.125 ? "█" : (rem<0.375 ? "▓" : 
+                          (rem<0.625? "▒" : (rem<0.875? "░" : " ")))
+                    end
+                    print("\rProgress: #{pb}\r")
+                  end
+                end
               when /=====  PAUSE  =====/
                 #@playing = false
                 #puts "Pause on mplayer"
@@ -601,6 +607,9 @@ module Mlmp3p
               #when "\n"
               when %r{^EOF code: (.*)\s*\n$}
                 on_track_finished
+                if @progress_bar
+                  puts ""
+                end
                 #puts "advancing..."
                 if( not @mplayer_loading)
                   @playing = false
@@ -1416,15 +1425,15 @@ module Mlmp3p
     def import_directory(root, recursive=false, only_new=false)
       # assume recursion and start a queue of nodes
       track_paths = find_tracks(root, recursive)
-      puts "Found #{track_paths.length} total tracks..."
+      #puts "Found #{track_paths.length} total tracks..."
       if only_new
         track_paths = remove_already_existing(track_paths,root)
       end
-      puts "Found #{track_paths.length} new tracks..."
+      #puts "Found #{track_paths.length} new tracks..."
       track_paths.each do |relative_path| 
         import_track_with_root_and_weight(relative_path, root, 1)
       end
-      puts "All tracks in #{root} "+
+      puts "All #{track_paths.length} tracks in #{root} "+
         "#{recursive ? "and subdirectories " :""}imported."
     end
     
