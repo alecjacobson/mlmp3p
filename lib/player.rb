@@ -1011,6 +1011,10 @@ module Mlmp3p
       end
     end
 
+    def adjust_system_volume(step)
+      system "osascript -e \"set volume output volume (output volume of (get volume settings)) + #{step}\""
+    end
+
     def adjust_volume(step)
       if(@player == :mplayer)
         mplayer_send_command("volume #{step} 0")

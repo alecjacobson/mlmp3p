@@ -174,6 +174,10 @@ module Mlmp3p
           @player.shuffle_tracks_array
         when " "
           @player.toggle_pause
+        when "+"
+          @player.adjust_system_volume(6.25)
+        when "-"
+          @player.adjust_system_volume(-6.25)
         when "\t"
           @player.show_next_n_tracks 10
         when "&"
