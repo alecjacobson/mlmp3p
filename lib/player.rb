@@ -148,6 +148,7 @@ module Mlmp3p
     attr_reader :original_tracks_array
     attr_reader :played_tracks # stack of played tracks
     attr_reader :shuffled #
+    attr_reader :shuffle_on_start #
     attr_reader :using_originals #
     attr_reader :available_players
     attr_accessor :playing # is mplayer or mpg123 instance currently playing a song
@@ -204,6 +205,7 @@ module Mlmp3p
       @playing = false # not playing currently               
       @random = false                                            
       @shuffled = false                                            
+      @shuffle_on_start = true
       @tracks_array = []
       @user = nil
       @using_originals = true       
@@ -323,6 +325,40 @@ module Mlmp3p
           @current_track_index+1,
           @current_track_index+n+1, 
           verbose)
+      end
+    end
+    # print out the next 10 tracks (assuming not random...)
+    def show_next_n_albums(n, verbose=false)
+      if @tracks_array.length == 0
+        puts "Playlist empty. No tracks to show."
+      else
+        puts "" 
+        puts "= Next #{n} albums on current playlist =" 
+        @current_track_index = @tracks_array.index @current_track
+        @current_track_index = 0 if @current_track_index.nil?
+        next_index = @current_track_index
+        prev_album = get_tag(@tracks_array[next_index],:album)
+        count = 0
+        while true
+          next_index = (next_index+1) % @tracks_array.length
+          if next_index == @current_track_index
+            break
+          end
+          next_album = get_tag(@tracks_array[next_index],:album)
+          if next_album != prev_album
+            prev_album = next_album
+            next_artist = get_tag(@tracks_array[next_index],:artist)
+            if next_artist.nil?
+              puts "#{next_album}"
+            else
+              puts "#{next_artist}/#{next_album}"
+            end
+            count += 1
+            if count == n
+              break
+            end
+          end
+        end
       end
     end
     
@@ -496,6 +532,16 @@ module Mlmp3p
       @shuffled = true
       puts "Current playlist shuffled."
     end
+
+    def shuffle_tracks_array_by_album
+      print_and_flush "Shuffling albums..."
+      album_hash = Hash[*@tracks_array.collect{|t| get_tag(t,:album)}.uniq.collect{|a| [a,rand]}.flatten]
+      # stable sort
+      set_tracks_array @tracks_array.sort_by.with_index{|t,i| [album_hash[get_tag(t,:album)],i]}
+      print_and_flush "\r\e[0K"
+      @shuffled = true
+      puts "Current playlist shuffled by album."
+    end
     
     # start playing the current play list
     def start
@@ -506,7 +552,9 @@ module Mlmp3p
       
       # wait for a few more songs
       sleep(0.5)
-      shuffle_tracks_array
+      if shuffle_on_start
+        shuffle_tracks_array
+      end
       
       play_track
       # loop until out of songs 
@@ -725,13 +773,23 @@ module Mlmp3p
       end
     end
     
+    def get_tag(track,key)
+      mp3tag = track.tag
+      if(not mp3tag.nil? and not mp3tag[key].nil?)
+        value = mp3tag[key] 
+      else
+        value = nil
+      end
+      return value
+    end
+
     def remove_all_except_current_album
       mp3tag = @current_track.tag
       if(not mp3tag.nil? and not mp3tag[:album].nil?)
-        current_artist = mp3tag[:album] 
-        # be sure to escape artist in case it contains ()'s etc
+        current_album = mp3tag[:album] 
+        # be sure to escape album in case it contains ()'s etc
         remove_all_except_given_regex_from_given_field(
-          "^#{Regexp.escape(current_artist)}$", "album") 
+          "^#{Regexp.escape(current_album)}$", "album") 
       else
         puts "Can't remove all except current album because"+
           " mp3 info doesn't exist for this track"
@@ -1209,6 +1267,27 @@ module Mlmp3p
       advance(amount)
       play_track
     end
+    def advance_to_next_album_and_play_track
+      next_index = @current_track_index
+      cur_album = get_tag(@current_track,:album)
+      while true
+        next_index = (next_index+1) % @tracks_array.length
+        if next_index == @current_track_index
+          break
+        end
+        next_album = get_tag(@tracks_array[next_index],:album)
+        if next_album != cur_album
+          break
+        end
+      end
+      if next_index == @current_track_index
+        puts "Playlist only contains current album"
+      else
+        @current_track_index = next_index
+        @current_track = @tracks_array[@current_track_index]
+        play_track
+      end
+    end
     
     def toggle_pause_import
       @pause_import = !@pause_import;
@@ -1516,6 +1595,9 @@ module Mlmp3p
       # check root_dir against current dir?
       
       root_dir = doc.root.attributes["root_dir"] 
+      shuffle_attr = doc.root.attributes["shuffle"]
+      @shuffle_on_start = shuffle_attr.nil? || shuffle_attr.to_s.downcase == "true"
+      puts "sos: #{shuffle_on_start}"
       absolute_path_to_playlist_dir = File.expand_path(File.dirname(xml_file_name))
       
       # extract all of the tracks and their info
@@ -1564,7 +1646,7 @@ module Mlmp3p
 
     # find the best (most frequent) root_dir
     # could be nil
-    def best_root_dir
+    def most_frequent_root_dir
       hash = {}
       @tracks_array.each do |track|
         if hash.has_key? track.root_dir
@@ -1584,17 +1666,38 @@ module Mlmp3p
       return best_root
     end
 
+    def extract_common_root_dir
+      rdirs = nil
+      @tracks_array.each do |track|
+        if rdirs.nil?
+          rdirs = File.dirname(track.relative_path).split("/")
+        else
+          tdirs = File.dirname(track.relative_path).split("/")
+          # root can only be as long as shortest path
+          rdirs.pop([rdirs.length-tdirs.length,0].max)
+          rdirs = rdirs.zip(tdirs).select{ |x, y| x == y }.map{ |x,y| x}
+        end
+      end
+      return rdirs.join("/")
+    end
+
     def write_tracks_array_to_xml_file(tracks_array, xml_file_name)
       xml = Builder::XmlMarkup.new(:indent => 2)
       xml.instruct!
-      #puts "About to call best_root_dir..."
-      root_dir = best_root_dir
-      xml.playlist("root_dir"=>root_dir){
+      root_dir = most_frequent_root_dir
+      if root_dir.nil? or root_dir.empty?
+        root_dir = extract_common_root_dir
+      end
+      effective_root_dir = root_dir
+      if root_dir == File.dirname(xml_file_name)
+        effective_root_dir = "."
+      end
+      xml.playlist("root_dir"=>effective_root_dir){
         tracks_array.each do |track|
           xml.track{
-            xml.path(track.relative_path)
-            # only add root dir field if different than global
-            xml.root_dir(track.root_dir) unless track.root_dir == root_dir
+            xml.path(track.relative_path.sub(root_dir,""))
+            ## only add root dir field if different than global
+            #xml.root_dir(track.root_dir) unless track.root_dir == root_dir
             xml.weight(track.weight)
             xml.played(track.played)
             xml.skipped(track.skipped)

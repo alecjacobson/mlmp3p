@@ -125,6 +125,8 @@ module Mlmp3p
             puts "Show full path in info: #{
               @player.bool2onoff(@player.show_full_path_in_info)}..."
             puts ""
+        when "F"
+          @player.advance_to_next_album_and_play_track
         when "f"
           if !@player.current_track.nil?
             @player.current_track.skipped = @player.current_track.skipped + 1
@@ -172,6 +174,8 @@ module Mlmp3p
           @player.jump_to_top_of_playlist
         when "z"
           @player.shuffle_tracks_array
+        when "Z"
+          @player.shuffle_tracks_array_by_album
         when " "
           @player.toggle_pause
         when "+"
@@ -180,6 +184,8 @@ module Mlmp3p
           @player.adjust_system_volume(-6.25)
         when "\t"
           @player.show_next_n_tracks 10
+        when "\e[Z"
+          @player.show_next_n_albums 10
         when "&"
           exec_long_command(@last_long_command)
         when ":"
@@ -494,6 +500,7 @@ module Mlmp3p
 Q,q      quit
 [space]  pause/unpause
 f        advance forward a track
+F        advance forward to next album
 b        reverse to beginnging of track. If at beginning, reverse a track
 z        shuffle current playlist, rearrange order of playlist then play
          tracks sequentially in shuffled order. Not pick a song at random

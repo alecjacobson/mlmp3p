@@ -17,6 +17,7 @@ def begin_playlist_generator
     puts "Make a new xml playlist file from txt file of tracks on lines:"
     puts "mlmp3p-playlist path/to/music.txt output-playlist.xml"
     puts 
+    exit
   end
 
   # just play a playlist with no contoller
