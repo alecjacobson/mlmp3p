@@ -1116,7 +1116,7 @@ module Mlmp3p
           end
           # either track is a url or it must exist
           file_exists =
-            (!((track_path =~ /^http:\/\//).nil?)) || (File.exists?(track_path))
+            (!((track_path =~ /^http:\/\//).nil?)) || (File.exist?(track_path))
 
 
           if not file_exists
@@ -1155,7 +1155,7 @@ module Mlmp3p
         if(@caching and not @random and not @current_track_index.nil?)
           # make the cache directory
           FileUtils.mkdir(@cache_directory) unless 
-            File.exists?(@cache_directory)
+            File.exist?(@cache_directory)
           # only allow one cache thread to go at once
           @cache_thread.kill unless @cache_thread.nil?
           # handle the cacheing in its own thread since caching is triggered by
@@ -1178,7 +1178,7 @@ module Mlmp3p
                       track.relative_path.gsub(/^http:\/\/[^\/]+\//,""))
                     # assume if file with this name already exists then it IS
                     # the cache of this track
-                    if(!File.exists?(new_path))
+                    if(!File.exist?(new_path))
                       # assumes paths are file system paths not urls
                       http_path = URI.escape(track.path) 
                       # get the contents of the http file
@@ -1194,7 +1194,7 @@ module Mlmp3p
                     new_path = File.join(@cache_directory,
                       track.relative_path)
                     # again assume if exists then its the cache
-                    if(!File.exists?(new_path))
+                    if(!File.exist?(new_path))
                       #puts "" if VERBOSE_DEBUG
                       #puts "cp \"#{track.path}\" \"#{new_path}\"" if VERBOSE_DEBUG
                       # make sure heirarchy exists for this file
